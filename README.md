@@ -1,7 +1,7 @@
-# admin-zabbix
+#keepalived
 <<<<<<< HEAD
 =======
-# Домашнее задание к занятию "`Zabbix 1`" - `Klochkov Vladimir`
+# Домашнее задание к занятию "`Keepalived/vrrp`" - `Klochkov Vladimir`
 
 
 ### Инструкция по выполнению домашнего задания
@@ -29,27 +29,47 @@
 
 `Приведите ответ в свободной форме........`
 
-1. [link screen authorization](https://github.com/Klochkov777/admin-zabbix/blob/master/screen/task1.1.png)
-2. Вместо Apache был установлен nginx и вместо zabbix-agent был установлен zabbix-agent2. Использовалась версия linux Debian11, zabbix 6.4, postgresql-13. Все это было сделано по рекомендации лектора и на выполнение задания существенного влияния не оказало. Были применены для установки следующие команды:
-* sudo wget https://repo.zabbix.com/zabbix/6.4/debian/pool/main/z/zabbix-release/zabbix-release_6.4-1+debian11_all.deb
-* sudo dpkg -i zabbix-release_6.4-1+debian11_all.deb
-* sudo apt update
-* sudo apt install zabbix-server-pgsql zabbix-frontend-php php7.4-pgsql zabbix-apache-conf zabbix-sql-scripts zabbix-agent2
-* sudo apt install postgresql-13
-* sudo -u postgres createuser --pwprompt zabbix
-* sudo -u postgres createdb -O zabbix zabbix
-* zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz | sudo -u zabbix psql zabbix
-* Отредактировал файл /etc/zabbix/zabbix_server.conf:  DBPassword=password
-* Отредактировал файл /etc/zabbix/nginx.conf -- раскоментировал: # listen 8080;  # server_name example.com;
-* systemctl restart zabbix-server zabbix-agent nginx php7.4-fpm
-* systemctl enable zabbix-server zabbix-agent nginx php7.4-fpm
+1. Рабочая конфигурация ноды Master:
+* vrrp_instance failover_test {
+* state MASTER
+* interface enp0s8
+* virtual_router_id 10
+* priority 110
+* advert_int 4
+* authentication {
+* auth_type AH
+* auth_pass 1111
+* }
+* unicast_peer {
+* 192.168.1.103
+* }
+* virtual_ipaddress {
+* 192.168.1.50 dev enp0s8 label enp0s8:vip
+* }
+* }
 
+2. Рабочая конфигурация ноды Backup:
+* vrrp_instance failover_test {
+* state BACKUP
+* interface enp0s8
+* virtual_router_id 10
+* priority 110
+* advert_int 4
+* authentication {
+* auth_type AH
+* auth_pass 1111
+* }
+* unicast_peer {
+* 192.168.1.104
+* }
+* virtual_ipaddress {
+* 192.168.1.50 dev enp0s8 label enp0s8:vip
+* }
+* }
 
-### Задание 2
-
-1. [link screen authorization](https://github.com/Klochkov777/admin-zabbix/blob/master/screen/task2.1.png)
-2. [link screen hosts connected](https://github.com/Klochkov777/admin-zabbix/blob/master/screen/task2.2.png)
-3. [link screen log](https://github.com/Klochkov777/admin-zabbix/blob/master/screen/task2.3.png)
-4. Для выполнения задания не пользовался bash. Был использован графический интерфейс zabbix. Поэтому команд не предоставляю.
-
->>>>>>> bae5bb3 (finished task1.2)
+2. Скриншоты
+ - Конфигурация обеих нод [link screen configuration master and backup nodes](https://github.com/Klochkov777/keepalived/blob/master/screen/%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0%20%D0%BE%D1%82%202023-06-20%2002-38-33.png)
+ - отображение появления у ноды master (слева) на интерфейсе enp0s8 c ip 192.168.1.103 виртуального ip 192.168.1.50 [link MASTER ip a](https://github.com/Klochkov777/keepalived/blob/master/screen/%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0%20%D0%BE%D1%82%202023-06-20%2002-09-45.png)
+ - отображение появления у ноды master (слева) и у ноды backup (справа) на интерфейсах enp0s8 c ip 192.168.1.103 и ip 192.168.1.104 виртуальных ip 192.168.1.50 [link MASTER ip a and BACKUP ip a](https://github.com/Klochkov777/keepalived/blob/master/screen/%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0%20%D0%BE%D1%82%202023-06-20%2002-39-13.png)
+ - скрин что у обеих нод сервисы запущены [link services started](https://github.com/Klochkov777/keepalived/blob/master/screen/%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0%20%D0%BE%D1%82%202023-06-20%2003-18-17.png)
+ - enp0s8 в state DOWN у MASTER (слева) ip 192.168.1.103, при этом с хоста пингую и делаю tcpdump на хосте (нижняя часть скрина) по ip 192.168.1.103, что является доказательством корректной работы keepalived  [link master down, keepalived workable](https://github.com/Klochkov777/keepalived/blob/master/screen/%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0%20%D0%BE%D1%82%202023-06-20%2003-06-18.png)
